@@ -28,7 +28,7 @@
 - (void)initialize
 {
     _initializing = YES;
-    _barColor = [UIColor blackColor];
+    _barColor = [UIColor blueColor];
     
     _selectedSegmentIndex = -1;
     _font = [UIFont systemFontOfSize:15.0];
