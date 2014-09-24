@@ -17,6 +17,7 @@
 @property (nonatomic, strong) NSMutableDictionary *colors;
 @property (nonatomic, strong) NSMutableArray *counts; // of NSNumber
 @property (nonatomic, getter = isTransitioning) BOOL transitioning;
+@property (nonatomic, strong) UIColor *barColor;
 @end
 
 @implementation DZNSegmentedControl
@@ -27,6 +28,7 @@
 - (void)initialize
 {
     _initializing = YES;
+    _barColor = [UIColor blackColor];
     
     _selectedSegmentIndex = -1;
     _font = [UIFont systemFontOfSize:15.0];
@@ -37,7 +39,7 @@
     _autoAdjustSelectionIndicatorWidth = YES;
     
     _selectionIndicator = [UIView new];
-    _selectionIndicator.backgroundColor = self.tintColor;
+    _selectionIndicator.backgroundColor = self.barColor;
     [self addSubview:_selectionIndicator];
     
     _hairline = [UIView new];
@@ -226,10 +228,10 @@
     if (!color) {
         switch (state) {
             case UIControlStateNormal:              return [UIColor darkGrayColor];
-            case UIControlStateHighlighted:         return self.tintColor;
+            case UIControlStateHighlighted:         return self.barColor;
             case UIControlStateDisabled:            return [UIColor lightGrayColor];
-            case UIControlStateSelected:            return self.tintColor;
-            default:                                return self.tintColor;
+            case UIControlStateSelected:            return self.barColor;
+            default:                                return self.barColor;
         }
     }
     
@@ -264,7 +266,9 @@
             attributes = [attributedString attributesAtIndex:0 effectiveRange:range];
         }
         
-        frame.size = CGSizeMake([title sizeWithAttributes:attributes].width, self.selectionIndicatorHeight);
+        CGSize titleSize = [title sizeWithFont:[UIFont systemFontOfSize:12] constrainedToSize:CGSizeMake(FLT_MAX, self.selectionIndicatorHeight)];
+        frame.size = CGSizeMake(titleSize.width, self.selectionIndicatorHeight);
+        //CGSizeMake([title sizeWithAttributes:attributes].width, self.selectionIndicatorHeight);
         frame.origin.x = (button.frame.size.width*(self.selectedSegmentIndex))+(button.frame.size.width-frame.size.width)/2;
     }
     else {
@@ -341,7 +345,7 @@
     if (self.items) {
         [self removeAllSegments];
     }
-
+    
     if (items) {
         _items = [NSArray arrayWithArray:items];
         _counts = [NSMutableArray arrayWithCapacity:items.count];
@@ -402,7 +406,7 @@
     NSAssert(segment >= 0, @"Cannot assign a title to a negative segment.");
     
     self.counts[segment] = count;
-        
+    
     [self configureSegments];
 }
 
@@ -463,7 +467,7 @@
             if (components.count < 2) {
                 return;
             }
-
+            
             NSString *count = [components objectAtIndex:self.inverseTitles ? 1 : 0];
             NSString *title = [components objectAtIndex:self.inverseTitles ? 0 : 1];
             
@@ -476,7 +480,7 @@
                 
                 UIColor *topColor = self.inverseTitles ? [color colorWithAlphaComponent:0.5] : color;
                 UIColor *bottomColor = self.inverseTitles ? color : [color colorWithAlphaComponent:0.5];
-
+                
                 NSUInteger topLength = self.inverseTitles ? title.length : count.length;
                 NSUInteger bottomLength = self.inverseTitles ? count.length : title.length;
                 
@@ -518,18 +522,27 @@
     
     UIButton *button = [self buttonAtIndex:segment];
     
-    CGFloat damping = !self.bouncySelectionIndicator ? : 0.65;
-    CGFloat velocity = !self.bouncySelectionIndicator ? : 0.5;
-
+//    CGFloat damping = !self.bouncySelectionIndicator ? : 0.65;
+//    CGFloat velocity = !self.bouncySelectionIndicator ? : 0.5;
+    
+    //    [UIView animateWithDuration:duration
+    //                          delay:0.0
+    //         usingSpringWithDamping:damping
+    //          initialSpringVelocity:velocity
+    //                        options:UIViewAnimationOptionBeginFromCurrentState|UIViewAnimationOptionCurveEaseInOut
+    //                     animations:^{
+    //                         self.selectionIndicator.frame = [self selectionIndicatorRect];
+    //                     }
+    //                     completion:^(BOOL finished) {
+    //                         [self enableAllButtonsInteraction:YES];
+    //                         button.userInteractionEnabled = NO;
+    //                         _transitioning = NO;
+    //                     }];
+    
     [UIView animateWithDuration:duration
-                          delay:0.0
-         usingSpringWithDamping:damping
-          initialSpringVelocity:velocity
-                        options:UIViewAnimationOptionBeginFromCurrentState|UIViewAnimationOptionCurveEaseInOut
                      animations:^{
                          self.selectionIndicator.frame = [self selectionIndicatorRect];
-                     }
-                     completion:^(BOOL finished) {
+                     } completion:^(BOOL finished) {
                          [self enableAllButtonsInteraction:YES];
                          button.userInteractionEnabled = NO;
                          _transitioning = NO;
@@ -637,7 +650,7 @@
     button.adjustsImageWhenDisabled = NO;
     button.exclusiveTouch = YES;
     button.tag = segment;
-
+    
     [self addSubview:button];
 }
 
@@ -648,7 +661,7 @@
     }
     
     self.selectionIndicator.frame = [self selectionIndicatorRect];
-    self.selectionIndicator.backgroundColor = self.tintColor;
+    self.selectionIndicator.backgroundColor = self.barColor;
 }
 
 - (void)configureButtonForSegment:(NSUInteger)segment
@@ -733,14 +746,14 @@
 + (NSNumberFormatter *)defaultFormatter
 {
     static NSNumberFormatter *defaultFormatter;
-
+    
     static dispatch_once_t oncePredicate;
     dispatch_once(&oncePredicate, ^{
         defaultFormatter = [[NSNumberFormatter alloc] init];
         defaultFormatter.numberStyle = NSNumberFormatterDecimalStyle;
         [defaultFormatter setGroupingSeparator:[[NSLocale currentLocale] objectForKey:NSLocaleGroupingSeparator]];
     });
-
+    
     return defaultFormatter;
 }
 
